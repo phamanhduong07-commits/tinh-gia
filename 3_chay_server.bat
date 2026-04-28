@@ -13,8 +13,8 @@ call venv\Scripts\activate.bat
 echo ================================================
 echo   NAM PHUONG - TINH GIA SERVER
 echo ================================================
-echo   API  : http://localhost:8000
-echo   Docs : http://localhost:8000/docs
+echo   API  : http://localhost:8001
+echo   Docs : http://localhost:8001/docs
 echo   Nhan Ctrl+C de tat server
 echo ================================================
 echo.
