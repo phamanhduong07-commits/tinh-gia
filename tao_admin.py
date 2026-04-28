@@ -87,7 +87,7 @@ def main():
     print(f"  Email    : {user.email}")
     print()
     print("  Tiep theo: chay 3_chay_server.bat")
-    print("  Sau do mo: http://localhost:8001/docs")
+    print("  Sau do mo: http://localhost:8002/docs")
     input("\nNhan Enter de thoat...")
 
 

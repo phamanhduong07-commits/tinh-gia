@@ -1,6 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .database import Base, engine, SessionLocal
@@ -68,10 +70,11 @@ app.include_router(autocomplete.router, prefix="/api")
 app.include_router(import_data.router,  prefix="/api")
 
 
-@app.get("/", include_in_schema=False)
-def root():
-    return JSONResponse({"status": "ok", "app": "Nam Phuong API v1.0"})
-
 @app.get("/health", include_in_schema=False)
 def health():
     return JSONResponse({"status": "healthy"})
+
+# Serve frontend – must be last (catch-all)
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(_static_dir):
+    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")

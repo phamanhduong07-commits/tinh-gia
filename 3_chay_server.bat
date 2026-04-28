@@ -16,7 +16,7 @@ echo   NAM PHUONG - TINH GIA SERVER
 echo ================================================
 echo   Dang khoi dong...
 echo   Sau khi thay "Application startup complete"
-echo   Mo trinh duyet tai: http://localhost:8001/docs
+echo   Mo trinh duyet tai: http://localhost:8002/docs
 echo   Nhan Ctrl+C de tat
 echo ================================================
 echo.
