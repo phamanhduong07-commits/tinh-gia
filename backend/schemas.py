@@ -9,7 +9,9 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: str
     password: str
+    full_name: Optional[str] = None
     company_name: Optional[str] = None
+    role: str = "user"  # "admin" | "user"
 
 
 class UserLogin(BaseModel):
@@ -21,12 +23,32 @@ class UserOut(BaseModel):
     id: int
     email: str
     username: str
+    full_name: Optional[str]
     company_name: Optional[str]
+    role: str
     is_active: bool
     created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    company_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class AdminResetPassword(BaseModel):
+    new_password: str
 
 
 class Token(BaseModel):

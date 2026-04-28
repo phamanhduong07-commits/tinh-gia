@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from .config import settings
 from .database import Base, engine
 from .routers import (
-    auth, config, prices, presets, terms,
+    auth, admin, config, prices, presets, terms,
     customers, products, orders, history, autocomplete, import_data,
 )
 
@@ -30,6 +30,7 @@ app.add_middleware(
 
 # Đăng ký tất cả routers
 app.include_router(auth.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 app.include_router(config.router, prefix="/api")
 app.include_router(prices.router, prefix="/api")
 app.include_router(presets.router, prefix="/api")
