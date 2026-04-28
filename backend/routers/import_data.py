@@ -1,6 +1,10 @@
 """
 Endpoint để import toàn bộ dữ liệu từ localStorage export một lần.
 Frontend sẽ gọi POST /import với JSON chứa tất cả dữ liệu cũ.
+
+Lưu ý phân quyền:
+  - config & prices: chỉ admin mới được import (dữ liệu chung toàn hệ thống)
+  - phần còn lại: mọi user được import (dữ liệu riêng của họ)
 """
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -21,37 +25,44 @@ def bulk_import(
     imported: dict = {}
     errors: list = []
 
-    # ── Config ──
+    # ── Config (global, chỉ admin) ──
     if body.config:
-        try:
-            cfg = db.query(models.Config).filter_by(user_id=current_user.id).first()
-            if not cfg:
-                cfg = models.Config(user_id=current_user.id)
-                db.add(cfg)
-            cfg.print_cost = float(body.config.get("print", 0))
-            cfg.make_cost = float(body.config.get("make", 0))
-            cfg.profit = float(body.config.get("profit", 0))
-            cfg.waste = float(body.config.get("waste", 0))
-            imported["config"] = 1
-        except Exception as e:
-            errors.append(f"config: {e}")
+        if current_user.role != "admin":
+            errors.append("config: chỉ Admin mới được import cấu hình chi phí")
+        else:
+            try:
+                cfg = db.query(models.Config).first()
+                if not cfg:
+                    cfg = models.Config()
+                    db.add(cfg)
+                cfg.print_cost = float(body.config.get("print", 0))
+                cfg.make_cost  = float(body.config.get("make", 0))
+                cfg.profit     = float(body.config.get("profit", 0))
+                cfg.waste      = float(body.config.get("waste", 0))
+                cfg.updated_by = current_user.id
+                imported["config"] = 1
+            except Exception as e:
+                errors.append(f"config: {e}")
 
-    # ── Paper Prices ──
+    # ── Paper Prices (global, chỉ admin) ──
     if body.prices:
-        try:
-            db.query(models.PaperPrice).filter_by(user_id=current_user.id).delete()
-            prices = body.prices.get("prices", {})
-            active = body.prices.get("active", None)
-            for code, price in prices.items():
-                db.add(models.PaperPrice(
-                    user_id=current_user.id,
-                    code=code,
-                    price_per_kg=float(price),
-                    active=(code == active),
-                ))
-            imported["prices"] = len(prices)
-        except Exception as e:
-            errors.append(f"prices: {e}")
+        if current_user.role != "admin":
+            errors.append("prices: chỉ Admin mới được import giá giấy")
+        else:
+            try:
+                db.query(models.PaperPrice).delete()
+                prices = body.prices.get("prices", {})
+                active = body.prices.get("active", None)
+                for code, price in prices.items():
+                    db.add(models.PaperPrice(
+                        code=code,
+                        price_per_kg=float(price),
+                        active=(code == active),
+                        updated_by=current_user.id,
+                    ))
+                imported["prices"] = len(prices)
+            except Exception as e:
+                errors.append(f"prices: {e}")
 
     # ── Presets ──
     if body.presets:
@@ -74,7 +85,7 @@ def bulk_import(
             errors.append(f"terms: {e}")
 
     # ── Customers ──
-    cust_map: dict = {}  # client_id → DB id
+    cust_map: dict = {}
     if body.customers:
         try:
             db.query(models.Customer).filter_by(user_id=current_user.id).delete()
@@ -123,7 +134,7 @@ def bulk_import(
             for p_data in body.products:
                 client_cust_id = p_data.get("custId", "")
                 customer_id = cust_map.get(client_cust_id)
-                prod = models.Product(
+                db.add(models.Product(
                     user_id=current_user.id,
                     customer_id=customer_id,
                     client_id=p_data.get("id", ""),
@@ -152,8 +163,7 @@ def bulk_import(
                     dan=bool(p_data.get("dan")),
                     dophu=bool(p_data.get("dophu")),
                     paper_codes=p_data.get("paperCode"),
-                )
-                db.add(prod)
+                ))
             imported["products"] = len(body.products)
         except Exception as e:
             errors.append(f"products: {e}")
@@ -163,7 +173,7 @@ def bulk_import(
         try:
             db.query(models.Order).filter_by(user_id=current_user.id).delete()
             for o_data in body.orders:
-                order = models.Order(
+                db.add(models.Order(
                     user_id=current_user.id,
                     seq=int(o_data.get("seq", 0)),
                     no=o_data.get("no", ""),
@@ -211,8 +221,7 @@ def bulk_import(
                     priority=o_data.get("priority", "normal"),
                     status=o_data.get("status", "new"),
                     layer_codes=o_data.get("layerCodes"),
-                )
-                db.add(order)
+                ))
             imported["orders"] = len(body.orders)
         except Exception as e:
             errors.append(f"orders: {e}")

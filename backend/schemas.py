@@ -69,6 +69,7 @@ class ConfigIn(BaseModel):
 class ConfigOut(ConfigIn):
     id: int
     updated_at: datetime
+    updated_by: Optional[int] = None
 
     class Config:
         from_attributes = True

@@ -21,9 +21,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 
-    # Relations
-    configs = relationship("Config", back_populates="user", cascade="all, delete-orphan")
-    paper_prices = relationship("PaperPrice", back_populates="user", cascade="all, delete-orphan")
+    # Relations  (Config và PaperPrice là global, không thuộc user nào)
     presets = relationship("Preset", back_populates="user", cascade="all, delete-orphan")
     terms = relationship("Term", back_populates="user", cascade="all, delete-orphan")
     customers = relationship("Customer", back_populates="user", cascade="all, delete-orphan")
@@ -34,32 +32,28 @@ class User(Base):
 
 
 class Config(Base):
-    """Thông số gia công & lợi nhuận (LS_CFG)"""
+    """Thông số gia công & lợi nhuận — dùng chung toàn hệ thống, chỉ admin sửa."""
     __tablename__ = "configs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     print_cost = Column(Float, default=0)   # gPrint
     make_cost = Column(Float, default=0)    # gMake
     profit = Column(Float, default=0)       # gProfit
     waste = Column(Float, default=0)        # gWaste
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # admin nào sửa cuối
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
-
-    user = relationship("User", back_populates="configs")
 
 
 class PaperPrice(Base):
-    """Giá giấy theo mã (LS_PRICES)"""
+    """Giá giấy theo mã — dùng chung toàn hệ thống, chỉ admin sửa."""
     __tablename__ = "paper_prices"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    code = Column(String(20), nullable=False)       # mã giấy VD: GA, HB, 98
+    code = Column(String(20), nullable=False, unique=True)  # mã giấy VD: GA, HB, 98
     price_per_kg = Column(Float, default=0)
     active = Column(Boolean, default=True)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
-
-    user = relationship("User", back_populates="paper_prices")
 
 
 class Preset(Base):
